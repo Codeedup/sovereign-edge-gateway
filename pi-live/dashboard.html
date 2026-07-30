@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#11100d">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <title>Sovereign Edge Gateway</title>
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260730-combined-01">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <p>SOVEREIGN EDGE</p>
+        <h1>Gateway</h1>
+      </div>
+      <div class="top-status">
+        <span id="gatewayDot" class="dot warn"></span>
+        <div>
+          <strong id="gatewayState">Syncing</strong>
+          <span id="syncTime">--:--:--</span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="overviewView" class="view active" aria-labelledby="overviewTab">
+        <div class="overview-grid">
+          <article class="tile metric-tile">
+            <span class="label">TEMP</span>
+            <strong><span id="temperatureValue">--.-</span><small>C</small></strong>
+            <em id="temperatureState">No data</em>
+          </article>
+
+          <article class="tile metric-tile">
+            <span class="label">HUMIDITY</span>
+            <strong><span id="humidityValue">--</span><small>%</small></strong>
+            <em id="humidityState">No data</em>
+          </article>
+
+          <article class="tile metric-tile">
+            <span class="label">PRESSURE</span>
+            <strong><span id="pressureValue">----</span><small>hPa</small></strong>
+            <em id="pressureState">No data</em>
+          </article>
+
+          <article class="tile state-tile">
+            <span class="label">MOTION</span>
+            <strong id="motionState">--</strong>
+            <em id="motionTime">No data</em>
+          </article>
+
+          <article class="tile state-tile">
+            <span class="label">LIGHT</span>
+            <strong><span id="lightValue">--.-</span><small>lux</small></strong>
+            <em id="lightState">No data</em>
+          </article>
+
+          <article class="tile node-tile">
+            <span class="label">NODES</span>
+            <div class="node-row">
+              <span id="node1Dot" class="dot warn"></span>
+              <strong>N1</strong>
+              <em id="node1State">--</em>
+            </div>
+            <div class="node-row">
+              <span id="node2Dot" class="dot warn"></span>
+              <strong>N2</strong>
+              <em id="node2State">--</em>
+            </div>
+          </article>
+
+          <article id="alertSummary" class="tile alert-summary">
+            <span class="label">ALERTS</span>
+            <strong id="alertSummaryTitle">No active alerts</strong>
+            <em id="alertSummaryMessage">Local rules clear</em>
+          </article>
+        </div>
+      </section>
+
+      <section id="historyView" class="view" aria-labelledby="historyTab">
+        <div class="view-head">
+          <h2>History</h2>
+          <span id="historyCount">0 samples</span>
+        </div>
+        <div class="selector" aria-label="History metric">
+          <button class="metric-button active" data-metric="temperature">Temp</button>
+          <button class="metric-button" data-metric="humidity">Humidity</button>
+          <button class="metric-button" data-metric="pressure">Pressure</button>
+          <button class="metric-button" data-metric="light">Light</button>
+          <button class="metric-button" data-metric="motion">Motion</button>
+        </div>
+        <div id="chartPanel" class="chart-panel">
+          <canvas id="trendChart"></canvas>
+          <div id="chartEmpty">Waiting for data</div>
+        </div>
+        <div id="motionHistoryList" class="compact-list hidden"></div>
+      </section>
+
+      <section id="alertsView" class="view" aria-labelledby="alertsTab">
+        <div class="view-head">
+          <h2>Alerts</h2>
+          <span id="alertCount">0 active</span>
+        </div>
+        <div id="alertsList" class="scroll-list"></div>
+      </section>
+
+      <section id="systemView" class="view" aria-labelledby="systemTab">
+        <div class="view-head">
+          <h2>System</h2>
+          <span id="buildLabel">UI 20260730-01</span>
+        </div>
+        <div class="system-grid">
+          <article class="tile system-tile">
+            <span class="label">API</span>
+            <strong id="systemApi">--</strong>
+          </article>
+          <article class="tile system-tile">
+            <span class="label">DATABASE</span>
+            <strong id="systemDatabase">--</strong>
+          </article>
+          <article class="tile system-tile">
+            <span class="label">NODE 1</span>
+            <strong id="systemNode1">--</strong>
+            <em id="systemNode1Age">--</em>
+          </article>
+          <article class="tile system-tile">
+            <span class="label">NODE 2</span>
+            <strong id="systemNode2">--</strong>
+            <em id="systemNode2Age">--</em>
+          </article>
+          <article class="tile system-tile">
+            <span class="label">UPTIME</span>
+            <strong id="systemUptime">--</strong>
+          </article>
+          <article class="tile system-tile">
+            <span class="label">RECORDS</span>
+            <strong id="systemRecords">--</strong>
+          </article>
+          <article class="tile system-tile wide">
+            <span class="label">MODE</span>
+            <strong>LOCAL ONLY</strong>
+            <em>ESP32 -> FastAPI -> SQLite -> LCD</em>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Dashboard navigation">
+      <button id="overviewTab" class="nav-button active" data-view="overviewView">Overview</button>
+      <button id="historyTab" class="nav-button" data-view="historyView">History</button>
+      <button id="alertsTab" class="nav-button" data-view="alertsView">Alerts</button>
+      <button id="systemTab" class="nav-button" data-view="systemView">System</button>
+    </nav>
+  </div>
+
+  <script src="/static/dashboard.js?v=20260730-combined-01"></script>
+</body>
+</html>

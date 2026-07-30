@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Sovereign Display Sleep
+Exec=sh -c 'sleep 12; xset s blank; xset s 600 600; xset +dpms; xset dpms 600 600 600'
+X-GNOME-Autostart-enabled=true

@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Sovereign Dashboard
+Exec=sh -c 'sleep 8; rm -rf /tmp/sovereign-kiosk-profile; chromium --kiosk --noerrdialogs --disable-infobars --disable-gpu --no-first-run --no-default-browser-check --disable-session-crashed-bubble --password-store=basic --user-data-dir=/tmp/sovereign-kiosk-profile --disk-cache-size=1 --media-cache-size=1 http://127.0.0.1:8001/dashboard?kiosk=20260730-combined-04'
+X-GNOME-Autostart-enabled=true
