@@ -5,13 +5,15 @@ import sqlite3
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE_PATH = BASE_DIR / "gateway.db"
-STATIC_DIR = BASE_DIR / "static"
+DASHBOARD_ASSETS = {
+    "dashboard.css",
+    "dashboard.js",
+}
 
 ENVIRONMENT_DEVICE = "environment_node_01"
 SENSOR_NODE_2 = "sensor_node_02"
@@ -25,12 +27,6 @@ LOW_LIGHT_LUX = 20.0
 MOTION_DARK_WINDOW_SECONDS = 30
 
 app = FastAPI(title="Sovereign Edge Gateway")
-
-app.mount(
-    "/static",
-    StaticFiles(directory=STATIC_DIR),
-    name="static",
-)
 
 
 class SensorReading(BaseModel):
@@ -667,8 +663,26 @@ def home():
 @app.get("/dashboard", include_in_schema=False)
 def dashboard():
     return FileResponse(
-        STATIC_DIR / "dashboard.html"
+        BASE_DIR / "dashboard.html"
     )
+
+
+@app.get("/static/{asset_name}", include_in_schema=False)
+def dashboard_asset(asset_name: str):
+    if asset_name not in DASHBOARD_ASSETS:
+        raise HTTPException(
+            status_code=404,
+            detail="Static asset not found",
+        )
+
+    asset_path = BASE_DIR / asset_name
+    if not asset_path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Static asset not found",
+        )
+
+    return FileResponse(asset_path)
 
 
 @app.get("/health")

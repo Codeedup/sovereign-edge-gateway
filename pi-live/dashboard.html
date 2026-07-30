@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#11100d">
   <meta http-equiv="Cache-Control" content="no-store">
   <title>Sovereign Edge Gateway</title>
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260730-combined-01">
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260730-history-zoom-05">
 </head>
 <body>
   <div class="app-shell">
@@ -18,7 +18,7 @@
       <div class="top-status">
         <span id="gatewayDot" class="dot warn"></span>
         <div>
-          <strong id="gatewayState">Syncing</strong>
+          <strong id="gatewayState">Pi Status</strong>
           <span id="syncTime">--:--:--</span>
         </div>
       </div>
@@ -93,6 +93,11 @@
         </div>
         <div id="chartPanel" class="chart-panel">
           <canvas id="trendChart"></canvas>
+          <div id="chartControls" class="chart-controls" aria-label="Chart scale controls">
+            <button id="chartZoomOut" class="chart-zoom-button" type="button" aria-label="Zoom chart out">-</button>
+            <button id="chartReset" class="chart-zoom-button chart-reset" type="button" aria-label="Reset chart scale">Auto</button>
+            <button id="chartZoomIn" class="chart-zoom-button" type="button" aria-label="Zoom chart in">+</button>
+          </div>
           <div id="chartEmpty">Waiting for data</div>
         </div>
         <div id="motionHistoryList" class="compact-list hidden"></div>
@@ -155,6 +160,6 @@
     </nav>
   </div>
 
-  <script src="/static/dashboard.js?v=20260730-combined-01"></script>
+  <script src="/static/dashboard.js?v=20260730-history-zoom-05"></script>
 </body>
 </html>

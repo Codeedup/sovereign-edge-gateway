@@ -1,5 +1,9 @@
 const POLL_MS = 5000;
-const UI_VERSION = "20260730-01";
+const UI_VERSION = "20260730-06";
+const ASSET_VERSION = "20260730-history-zoom-05";
+const CHART_MIN_ZOOM = 0.25;
+const CHART_MAX_ZOOM = 10;
+const CHART_ZOOM_STEP = 1.16;
 
 const state = {
   latest: null,
@@ -11,6 +15,12 @@ const state = {
   system: null,
   alerts: [],
   metric: "temperature",
+  chartZoom: {
+    temperature: 1,
+    humidity: 1,
+    pressure: 1,
+    light: 1,
+  },
   pollTimer: null,
 };
 
@@ -20,6 +30,8 @@ const metricConfig = {
     unit: "C",
     decimals: 1,
     color: "#e1aa4c",
+    minSpan: 10,
+    minZoomSpan: 0.5,
     rows: () => state.history,
     value: reading => reading.temperature,
     time: reading => reading.received_at,
@@ -29,6 +41,10 @@ const metricConfig = {
     unit: "%",
     decimals: 0,
     color: "#69c18f",
+    minSpan: 40,
+    minZoomSpan: 2,
+    minValue: 0,
+    maxValue: 100,
     rows: () => state.history,
     value: reading => reading.humidity,
     time: reading => reading.received_at,
@@ -38,6 +54,8 @@ const metricConfig = {
     unit: "hPa",
     decimals: 1,
     color: "#78a6d8",
+    minSpan: 20,
+    minZoomSpan: 1,
     rows: () => state.history,
     value: reading => reading.pressure,
     time: reading => reading.received_at,
@@ -47,6 +65,9 @@ const metricConfig = {
     unit: "lux",
     decimals: 1,
     color: "#d9ce83",
+    minSpan: 100,
+    minZoomSpan: 5,
+    minValue: 0,
     rows: () => state.lightReadings,
     value: reading => reading.lux,
     time: reading => reading.received_at,
@@ -83,12 +104,16 @@ function clearChildren(element) {
   }
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function ensureCombinedShell() {
   if (byId("motionState") && byId("buildLabel")) {
     return;
   }
 
-  const cssHref = "/static/dashboard.css?v=20260730-combined-01";
+  const cssHref = `/static/dashboard.css?v=${ASSET_VERSION}`;
   const hasVersionedCss = Array.from(document.querySelectorAll("link[rel='stylesheet']"))
     .some(link => link.getAttribute("href") === cssHref);
 
@@ -109,7 +134,7 @@ function ensureCombinedShell() {
         <div class="top-status">
           <span id="gatewayDot" class="dot warn"></span>
           <div>
-            <strong id="gatewayState">Syncing</strong>
+            <strong id="gatewayState">Pi Status</strong>
             <span id="syncTime">--:--:--</span>
           </div>
         </div>
@@ -184,6 +209,11 @@ function ensureCombinedShell() {
           </div>
           <div id="chartPanel" class="chart-panel">
             <canvas id="trendChart"></canvas>
+            <div id="chartControls" class="chart-controls" aria-label="Chart scale controls">
+              <button id="chartZoomOut" class="chart-zoom-button" type="button" aria-label="Zoom chart out">-</button>
+              <button id="chartReset" class="chart-zoom-button chart-reset" type="button" aria-label="Reset chart scale">Auto</button>
+              <button id="chartZoomIn" class="chart-zoom-button" type="button" aria-label="Zoom chart in">+</button>
+            </div>
             <div id="chartEmpty">Waiting for data</div>
           </div>
           <div id="motionHistoryList" class="compact-list hidden"></div>
@@ -337,8 +367,8 @@ function updateStateText(id, text, level) {
 function renderConnection(isOnline) {
   const dot = byId("gatewayDot");
   setClass(dot, "dot", isOnline ? "ok" : "bad");
-  setText("gatewayState", isOnline ? "Synced" : "Offline");
-  setText("syncTime", formatTime(new Date().toISOString()));
+  setText("gatewayState", "Pi Status");
+  setText("syncTime", isOnline ? formatTime(new Date().toISOString()) : "Offline");
 }
 
 function renderOverview() {
@@ -480,12 +510,107 @@ function renderMotionHistory() {
   }
 }
 
+function getChartZoom(metric = state.metric) {
+  return state.chartZoom[metric] || 1;
+}
+
+function updateChartResetControl() {
+  const button = byId("chartReset");
+  const config = metricConfig[state.metric];
+  if (!button || !config) return;
+
+  const isAuto = Math.abs(getChartZoom() - 1) < 0.01;
+  button.disabled = isAuto;
+  button.classList.toggle("active", !isAuto);
+}
+
+function calculateChartDomain(values, config) {
+  const dataMin = Math.min(...values);
+  const dataMax = Math.max(...values);
+  const dataCenter = (dataMin + dataMax) / 2;
+  const dataSpan = Math.max(dataMax - dataMin, 0);
+  const baseSpan = Math.max(dataSpan * 1.36, config.minSpan);
+  const minZoomSpan = config.minZoomSpan || config.minSpan * 0.1;
+  const zoomedSpan = baseSpan / getChartZoom();
+  const span = Math.max(minZoomSpan, dataSpan * 1.05, zoomedSpan);
+
+  if (
+    typeof config.minValue === "number" &&
+    typeof config.maxValue === "number" &&
+    span >= config.maxValue - config.minValue
+  ) {
+    return {
+      min: config.minValue,
+      max: config.maxValue,
+    };
+  }
+
+  let min = dataCenter - span / 2;
+  let max = dataCenter + span / 2;
+
+  if (typeof config.minValue === "number" && min < config.minValue) {
+    min = config.minValue;
+    max = min + span;
+  }
+
+  if (typeof config.maxValue === "number" && max > config.maxValue) {
+    max = config.maxValue;
+    min = max - span;
+  }
+
+  if (typeof config.minValue === "number") {
+    min = Math.max(config.minValue, min);
+  }
+
+  if (typeof config.maxValue === "number") {
+    max = Math.min(config.maxValue, max);
+  }
+
+  return { min, max };
+}
+
+function applyChartZoom(scale) {
+  const config = metricConfig[state.metric];
+  if (!config || !Number.isFinite(scale) || scale <= 0) return;
+
+  const nextZoom = clamp(getChartZoom() * scale, CHART_MIN_ZOOM, CHART_MAX_ZOOM);
+  if (Math.abs(nextZoom - getChartZoom()) < 0.001) return;
+
+  state.chartZoom[state.metric] = nextZoom;
+  updateChartResetControl();
+  requestAnimationFrame(drawChart);
+}
+
+function resetChartZoom() {
+  if (!metricConfig[state.metric]) return;
+
+  state.chartZoom[state.metric] = 1;
+  updateChartResetControl();
+  requestAnimationFrame(drawChart);
+}
+
+function setupChartInteractions() {
+  const panel = byId("chartPanel");
+  if (!panel || panel.dataset.zoomReady === "true") return;
+
+  panel.dataset.zoomReady = "true";
+
+  panel.addEventListener("wheel", event => {
+    if (!metricConfig[state.metric] || event.target.closest("button")) return;
+
+    event.preventDefault();
+    applyChartZoom(event.deltaY < 0 ? CHART_ZOOM_STEP : 1 / CHART_ZOOM_STEP);
+  }, { passive: false });
+}
+
 function drawChart() {
   const canvas = byId("trendChart");
   const empty = byId("chartEmpty");
   const config = metricConfig[state.metric];
 
   if (!canvas || !config) return;
+
+  updateChartResetControl();
 
   const rows = config.rows()
     .filter(row => config.value(row) !== null && config.value(row) !== undefined)
@@ -494,6 +619,8 @@ function drawChart() {
     .slice(-40);
 
   const bounds = canvas.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) return;
+
   const ratio = window.devicePixelRatio || 1;
   canvas.width = Math.max(1, Math.floor(bounds.width * ratio));
   canvas.height = Math.max(1, Math.floor(bounds.height * ratio));
@@ -503,32 +630,36 @@ function drawChart() {
   ctx.clearRect(0, 0, bounds.width, bounds.height);
 
   if (rows.length < 2) {
+    byId("chartControls")?.classList.add("hidden");
     empty.style.display = "grid";
     return;
   }
 
+  byId("chartControls")?.classList.remove("hidden");
   empty.style.display = "none";
 
   const values = rows.map(row => Number(config.value(row)));
-  let min = Math.min(...values);
-  let max = Math.max(...values);
-  const spread = max - min || 1;
-  min -= spread * 0.18;
-  max += spread * 0.18;
-
-  const pad = {
-    top: 14,
-    right: 44,
-    bottom: 20,
-    left: 10,
-  };
-  const width = bounds.width - pad.left - pad.right;
-  const height = bounds.height - pad.top - pad.bottom;
+  const { min, max } = calculateChartDomain(values, config);
 
   ctx.strokeStyle = "#4a4439";
   ctx.lineWidth = 1;
   ctx.fillStyle = "#b2aa99";
   ctx.font = "10px system-ui";
+
+  const axisLabels = [max, (max + min) / 2, min]
+    .map(label => `${label.toFixed(config.decimals)} ${config.unit}`);
+  const labelWidth = Math.ceil(
+    Math.max(...axisLabels.map(label => ctx.measureText(label).width))
+  );
+
+  const pad = {
+    top: 28,
+    right: Math.max(50, labelWidth + 12),
+    bottom: 20,
+    left: 10,
+  };
+  const width = bounds.width - pad.left - pad.right;
+  const height = bounds.height - pad.top - pad.bottom;
 
   for (let i = 0; i <= 3; i += 1) {
     const y = pad.top + (height / 3) * i;
@@ -546,6 +677,11 @@ function drawChart() {
     y: pad.top + ((max - value) / (max - min)) * height,
   }));
 
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(pad.left, pad.top, width, height);
+  ctx.clip();
+
   ctx.beginPath();
   points.forEach((point, index) => {
     if (index === 0) ctx.moveTo(point.x, point.y);
@@ -560,6 +696,7 @@ function drawChart() {
   ctx.beginPath();
   ctx.arc(lastPoint.x, lastPoint.y, 3, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
 
   ctx.fillStyle = "#b2aa99";
   ctx.textAlign = "left";
@@ -739,6 +876,11 @@ document.querySelectorAll(".metric-button").forEach(button => {
     renderHistory();
   });
 });
+
+byId("chartReset")?.addEventListener("click", resetChartZoom);
+byId("chartZoomOut")?.addEventListener("click", () => applyChartZoom(1 / CHART_ZOOM_STEP));
+byId("chartZoomIn")?.addEventListener("click", () => applyChartZoom(CHART_ZOOM_STEP));
+setupChartInteractions();
 
 window.addEventListener("resize", () => {
   if (byId("historyView").classList.contains("active")) {
