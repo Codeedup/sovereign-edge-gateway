@@ -643,5 +643,5 @@ belong to separate projects and are intentionally excluded.
 
 ## Author
 
-Built by **Julian Moffett** as a hands-on exploration of embedded systems,
+Built by **Dylan Moffett** as a hands-on exploration of embedded systems,
 edge-computing architecture and local-first infrastructure.
