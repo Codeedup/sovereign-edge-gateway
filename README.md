@@ -14,6 +14,16 @@ access, cloud storage and third-party dashboards are not required.
 > This is an engineering prototype, not a production-certified monitoring or
 > safety system.
 
+## Prototype Media
+
+![Sovereign Edge Gateway working prototype](docs/media/sovereign-edge-gateway-prototype.jpeg)
+
+The image and demo video show the Raspberry Pi gateway, touchscreen dashboard,
+ESP32 sensor nodes and breadboarded sensor components operating together as a
+functional local-first prototype.
+
+[Watch the working prototype demo video](docs/media/sovereign-edge-gateway-demo.mov)
+
 ## Why This Project Exists
 
 Many IoT demonstrations send readings directly from a microcontroller to a
@@ -324,6 +334,10 @@ server.
 sovereignEdge/
 |-- README.md
 |-- .gitignore
+|-- docs/
+|   `-- media/
+|       |-- sovereign-edge-gateway-demo.mov
+|       `-- sovereign-edge-gateway-prototype.jpeg
 |-- ESP-Sketches/
 |   |-- node1_final/
 |   |   |-- node1_final.ino
