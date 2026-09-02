@@ -26,16 +26,15 @@ functional local-first prototype.
 
 ## Why This Project Exists
 
-Many IoT demonstrations send readings directly from a microcontroller to a
-cloud platform. This project explores the opposite architecture:
+Sovereign Edge Gateway was conceived in response to the European Commission’s June 2026 [European Technological Sovereignty Package](https://digital-strategy.ec.europa.eu/en/news/commission-proposes-tech-sovereignty-package-strengthen-europes-digital-autonomy-and-resilience), particularly its [EU Open Source Strategy](https://digital-strategy.ec.europa.eu/en/factpages/eu-open-source-strategy).
 
-> What does a useful sensor system look like when sensing, transport,
-> processing, storage and visualization remain locally controlled?
+The strategy positions open-source technology as a way to strengthen user control, reduce dependence on proprietary providers and avoid vendor lock-in. This project explores what those principles could look like at the scale of a connected edge appliance:
 
-The result is a small edge appliance that demonstrates embedded integration,
-distributed sensing, networked telemetry, backend development, local
-persistence, Linux service deployment and a physical operator interface as one
-working system.
+> Can a useful distributed sensor system operate entirely on owner-controlled hardware, using an open-source software stack and no mandatory third-party cloud services?
+
+The resulting prototype keeps sensing, transport, processing, storage, alerting and visualisation within the local network. It uses ESP32 sensor nodes, a Raspberry Pi gateway, FastAPI, SQLite and a locally served dashboard without requiring external cloud infrastructure.
+
+This is an independent engineering prototype inspired by the package’s objectives, not an EU-sponsored project or a claim of regulatory compliance.
 
 ## Architecture
 
